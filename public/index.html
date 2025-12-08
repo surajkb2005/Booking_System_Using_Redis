@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Redis Booking System</title>
+    <style>
+        body { font-family: sans-serif; background: #eee; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        input { padding: 8px; margin: 5px; width: 200px; border: 1px solid #ccc; border-radius: 4px;}
+        button { padding: 8px 15px; border: none; cursor: pointer; color: white; border-radius: 4px;}
+        .btn-blue { background: #007bff; }
+        .btn-red { background: #dc3545; }
+        .btn-green { background: #28a745; font-size: 1.2em; width: 100%; margin-top: 10px;}
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+        #status-box { padding: 15px; margin-top: 10px; text-align: center; font-weight: bold; border-radius: 5px; display: none; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>✈️ Real Redis Flight System</h1>
+
+    <div class="card">
+        <h2>🛠️ Admin: Manage Flights</h2>
+        <div>
+            <input id="fid" placeholder="Flight ID (e.g. 101)">
+            <input id="fairline" placeholder="Airline">
+            <input id="fdest" placeholder="Destination">
+            <input id="fprice" type="number" placeholder="Price">
+            <button class="btn-blue" onclick="addFlight()">Save to Redis</button>
+        </div>
+        <table>
+            <thead><tr><th>ID</th><th>Airline</th><th>Destination</th><th>Price</th><th>Action</th></tr></thead>
+            <tbody id="flight-table"></tbody>
+        </table>
+    </div>
+
+    <div class="card" style="border-left: 5px solid orange;">
+        <h2>🎫 User: Book a Ticket</h2>
+        <p>Open this page in a second tab to test the Race Condition!</p>
+        <input id="username" placeholder="👤 Your Name">
+        <input id="seatId" placeholder="💺 Seat (e.g. A1)">
+        <button class="btn-green" onclick="bookTicket()">Book Now</button>
+        <div id="status-box"></div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:3000/api';
+
+    async function loadFlights() {
+        const res = await fetch(`${API}/flights`);
+        const flights = await res.json();
+        const tbody = document.getElementById('flight-table');
+        tbody.innerHTML = '';
+        flights.forEach(f => {
+            tbody.innerHTML += `<tr>
+                <td>${f.id}</td><td>${f.airline}</td><td>${f.destination}</td><td>$${f.price}</td>
+                <td><button class="btn-red" onclick="deleteFlight('${f.id}')">Delete</button></td>
+            </tr>`;
+        });
+    }
+
+    async function addFlight() {
+        const id = document.getElementById('fid').value;
+        const airline = document.getElementById('fairline').value;
+        const destination = document.getElementById('fdest').value;
+        const price = document.getElementById('fprice').value;
+
+        if(!id) return alert("Enter Flight ID");
+
+        await fetch(`${API}/flights`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({id, airline, destination, price})
+        });
+        loadFlights();
+    }
+
+    async function deleteFlight(id) {
+        await fetch(`${API}/flights/${id}`, { method: 'DELETE' });
+        loadFlights();
+    }
+
+    async function bookTicket() {
+        const user = document.getElementById('username').value;
+        const seatId = document.getElementById('seatId').value;
+        const box = document.getElementById('status-box');
+
+        if(!user || !seatId) return alert("Enter details");
+        
+        box.style.display = 'block';
+        box.innerHTML = 'Processing...';
+        box.className = '';
+
+        const res = await fetch(`${API}/book`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({seatId, user})
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            box.innerHTML = `✅ ${data.message}`;
+            box.className = 'success';
+        } else {
+            box.innerHTML = `❌ ${data.message} (Try in ${data.ttl}s)`;
+            box.className = 'error';
+        }
+    }
+
+    loadFlights();
+</script>
+</body>
+</html>
