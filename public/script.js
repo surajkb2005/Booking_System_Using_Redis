@@ -1,34 +1,17 @@
 const API = 'http://localhost:3000/api';
 
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-wrapper');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type === 'error' ? 'error' : ''}`;
-    toast.innerHTML = `<strong>${type === 'error' ? '⚡ Warning' : '✨ Success'}</strong><br>${message}`;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 500);
-    }, 4000);
-}
-
-function selectSeat(seat, element) {
-    document.getElementById('seatId').value = seat;
-    document.querySelectorAll('.seat-box').forEach(el => el.classList.remove('selected'));
-    element.classList.add('selected');
-}
-
 async function loadFlights() {
     const res = await fetch(`${API}/flights`);
     const flights = await res.json();
     const tbody = document.getElementById('flight-table');
-    tbody.innerHTML = flights.map(f => `
-        <tr>
-            <td><strong>${f.id}</strong><br><small>${f.destination}</small></td>
+    tbody.innerHTML = '';
+    flights.forEach(f => {
+        tbody.innerHTML += `<tr>
+            <td><strong>${f.id}</strong><br><small>${f.airline}</small></td>
             <td>$${f.price}</td>
-            <td><button onclick="deleteFlight('${f.id}')" style="cursor:pointer; border:none; background:none;">🗑️</button></td>
-        </tr>
-    `).join('');
+            <td><button onclick="deleteFlight('${f.id}')" style="background:none; border:none; cursor:pointer;">❌</button></td>
+        </tr>`;
+    });
 }
 
 async function addFlight() {
@@ -37,27 +20,32 @@ async function addFlight() {
     const destination = document.getElementById('fdest').value;
     const price = document.getElementById('fprice').value;
 
-    if (!id) return showToast("Flight ID is mandatory", "error");
+    if (!id) return alert("Enter Flight ID");
 
+    // Matches your server.js req.body exactly
     await fetch(`${API}/flights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, airline, destination, price })
     });
+    loadFlights();
+}
 
-    showToast(`Flight ${id} added to Redis network`);
+async function deleteFlight(id) {
+    await fetch(`${API}/flights/${id}`, { method: 'DELETE' });
     loadFlights();
 }
 
 async function bookTicket() {
     const user = document.getElementById('username').value;
     const seatId = document.getElementById('seatId').value;
-    const btn = document.getElementById('bookBtn');
+    const box = document.getElementById('status-box');
 
-    if (!user || !seatId) return showToast("Details incomplete", "error");
+    if (!user || !seatId) return alert("Enter details");
 
-    btn.innerText = "Processing...";
-    btn.style.opacity = "0.7";
+    box.style.display = 'block';
+    box.innerHTML = '⚡ Processing...';
+    box.className = '';
 
     const res = await fetch(`${API}/book`, {
         method: 'POST',
@@ -67,23 +55,14 @@ async function bookTicket() {
     const data = await res.json();
 
     if (data.success) {
-        showToast(`Confirmed! ${data.message}`);
-        localStorage.setItem('lastUser', user);
+        box.innerHTML = `✅ ${data.message}`;
+        box.className = 'success';
     } else {
-        showToast(`${data.message}`, "error");
+        // data.ttl is used here just like in your friend's original code
+        box.innerHTML = `❌ ${data.message} (Try in ${data.ttl}s)`;
+        box.className = 'error';
     }
-
-    btn.innerText = "Finalize Booking";
-    btn.style.opacity = "1";
 }
 
-async function deleteFlight(id) {
-    await fetch(`${API}/flights/${id}`, { method: 'DELETE' });
-    loadFlights();
-}
-
-window.onload = () => {
-    const saved = localStorage.getItem('lastUser');
-    if (saved) document.getElementById('username').value = saved;
-    loadFlights();
-};
+// Initial Load
+loadFlights();

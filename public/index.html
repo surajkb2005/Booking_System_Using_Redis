@@ -17,26 +17,25 @@
     <div class="glass-wrapper">
         <header>
             <div class="logo">✈️ RedisFly</div>
-            <p>Next-gen Concurrency-Safe Flight Engine</p>
+            <p>Concurrency-Safe Flight Engine</p>
         </header>
 
         <main class="dashboard-grid">
-            <section class="card admin-panel">
+            <section class="card">
                 <div class="card-header">
                     <h2>⚙️ Fleet Manager</h2>
-                    <span class="badge">Admin Mode</span>
                 </div>
                 <div class="input-stack">
                     <div class="row">
-                        <input id="fid" placeholder="Flight ID">
+                        <input id="fid" placeholder="Flight ID (e.g. 101)">
                         <input id="fairline" placeholder="Airline">
                     </div>
                     <div class="row">
                         <input id="fdest" placeholder="Destination">
-                        <input id="fprice" type="number" placeholder="Price ($)">
+                        <input id="fprice" type="number" placeholder="Price">
                     </div>
                 </div>
-                <button class="btn-primary" onclick="addFlight()">Deploy to Redis</button>
+                <button class="btn-primary" onclick="addFlight()">Save to Redis</button>
 
                 <div class="table-container">
                     <table>
@@ -52,34 +51,21 @@
                 </div>
             </section>
 
-            <section class="card user-panel">
+            <section class="card">
                 <div class="card-header">
                     <h2>🎫 Quick Reserve</h2>
                 </div>
                 <div class="booking-form">
-                    <div class="input-wrapper">
-                        <label>Passenger Identity</label>
-                        <input id="username" placeholder="Enter Full Name">
-                    </div>
+                    <input id="username" placeholder="👤 Your Name" class="full-width">
+                    <input id="seatId" placeholder="💺 Seat (e.g. A1)" class="full-width">
 
-                    <div class="seat-selector">
-                        <label>Select Your Throne</label>
-                        <div class="seat-preview">
-                            <div class="seat-box" onclick="selectSeat('A1', this)">A1</div>
-                            <div class="seat-box" onclick="selectSeat('A2', this)">A2</div>
-                            <div class="seat-box" onclick="selectSeat('B1', this)">B1</div>
-                            <div class="seat-box" onclick="selectSeat('B2', this)">B2</div>
-                        </div>
-                        <input id="seatId" placeholder="Seat Code" readonly>
-                    </div>
-
-                    <button id="bookBtn" class="btn-glow" onclick="bookTicket()">Finalize Booking</button>
+                    <button id="bookBtn" class="btn-glow" onclick="bookTicket()">Book Now</button>
+                    <div id="status-box"></div>
                 </div>
             </section>
         </main>
     </div>
 
-    <div id="toast-wrapper" class="toast-container"></div>
     <script src="script.js"></script>
 </body>
 
