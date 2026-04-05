@@ -1,0 +1,138 @@
+:root {
+    --accent: #6366f1;
+    --glass: rgba(255, 255, 255, 0.7);
+    --text: #1e293b;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: #0f172a;
+    color: var(--text);
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+}
+
+.blob,
+.blob2 {
+    position: absolute;
+    filter: blur(80px);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0.4;
+}
+
+.blob {
+    width: 400px;
+    height: 400px;
+    background: #6366f1;
+    top: -100px;
+    left: -100px;
+}
+
+.blob2 {
+    width: 300px;
+    height: 300px;
+    background: #2dd4bf;
+    bottom: -50px;
+    right: -50px;
+}
+
+.glass-wrapper {
+    width: 95%;
+    max-width: 1000px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    padding: 25px;
+}
+
+input {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+button {
+    cursor: pointer;
+    border-radius: 10px;
+    font-weight: 700;
+    border: none;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: white;
+    width: 100%;
+    padding: 12px;
+}
+
+.btn-glow {
+    background: #22c55e;
+    color: white;
+    width: 100%;
+    padding: 15px;
+    margin-top: 10px;
+    font-size: 1.1rem;
+}
+
+table {
+    width: 100%;
+    margin-top: 15px;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+th,
+td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+#status-box {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    display: none;
+    text-align: center;
+    font-weight: 600;
+}
+
+.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
