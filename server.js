@@ -14,7 +14,7 @@ app.use(express.static('public')); // Serves the HTML file
 const flightRoute = require('./routes/flightRoute');
 const bookingRoute = require('./routes/bookingRoute');
 
-// ✈️  API: FLIGHT MANAGEMENT (CRUD)
+//   API: FLIGHT MANAGEMENT (CRUD)
 app.use('/api/flights', flightRoute);
 
 //   API: BOOKING SYSTEM (RACE CONDITION)
