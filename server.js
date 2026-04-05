@@ -42,7 +42,6 @@ app.post('/api/flights', async (req, res) => {
         await client.hSet(key, 'airline', airline);
         await client.hSet(key, 'destination', destination);
         await client.hSet(key, 'price', price);
-        
         console.log(`   ✅ Saved to Database!`);
         res.json({ success: true, message: `Flight ${id} saved!` });
     } catch (e) {
@@ -99,10 +98,10 @@ app.post('/api/book', async (req, res) => {
             const owner = await client.get(seatId);
             const ttl = await client.ttl(seatId);
             console.log(`   ❌ FAILED: Blocked by lock owned by ${owner}`);
-            res.json({ 
-                success: false, 
+            res.json({
+                success: false,
                 message: `❌ Failed! Seat held by ${owner}`,
-                ttl: ttl 
+                ttl: ttl
             });
         }
     } catch (e) {
