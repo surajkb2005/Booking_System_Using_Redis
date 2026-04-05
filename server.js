@@ -38,7 +38,7 @@ app.post('/api/flights', async (req, res) => {
     const { id, airline, destination, price } = req.body;
     const key = `flight:${id}`;
 
-    console.log(`📝 Request to SAVE: ${key} -> ${airline}`);
+    console.log(` Request to SAVE: ${key} -> ${airline}`);
 
     try {
         // We use individual HSET commands to be 100% compatible with your server
@@ -73,17 +73,17 @@ app.get('/api/flights', async (req, res) => {
 // 3. Delete Flight (Removes from Redis)
 app.delete('/api/flights/:id', async (req, res) => {
     const key = `flight:${req.params.id}`;
-    console.log(`🗑️ Request to DELETE: ${key}`);
+    console.log(` Request to DELETE: ${key}`);
     await client.del(key);
     res.json({ success: true });
 });
 
 // ==========================================
-// 🎫  API: BOOKING SYSTEM (RACE CONDITION)
+//   API: BOOKING SYSTEM (RACE CONDITION)
 // ==========================================
 // app.post('/api/book', async (req, res) => {
 //     const { seatId, user } = req.body;
-//     console.log(`⚡ Booking Attempt: [${user}] wants [${seatId}]...`);
+//     console.log(` Booking Attempt: [${user}] wants [${seatId}]...`);
 
 //     try {
 //         // --- REAL REDIS ATOMIC LOCK ---
@@ -154,7 +154,7 @@ app.post('/api/confirm', async (req, res) => {
         return res.json({ success: false, message: "Not your seat!" });
     }
 
-    // Remove TTL → permanent booking
+    // Remove TTL -> permanent booking
     await client.set(seatId, JSON.stringify({
         user,
         status: "confirmed"

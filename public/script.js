@@ -5,6 +5,7 @@ async function loadFlights() {
     const res = await fetch(`${API}/flights`);
     const flights = await res.json();
     const tbody = document.getElementById('flight-table');
+
     tbody.innerHTML = '';
     flights.forEach(f => {
         tbody.innerHTML += `<tr>
@@ -29,11 +30,15 @@ async function addFlight() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, airline, destination, price })
     });
+
     loadFlights();
 }
 
 async function deleteFlight(id) {
-    await fetch(`${API}/flights/${id}`, { method: 'DELETE' });
+    await fetch(`${API}/flights/${id}`, {
+        method: 'DELETE'
+    });
+
     loadFlights();
 }
 
@@ -61,10 +66,10 @@ async function holdSeat() {
 }
 
 function startCountdown(seconds, seatId, user) {
-    const box = document.getElementById('status-box');
+    // const box = document.getElementById('status-box');
     const timerEl = document.getElementById(`timer-${seatId}`);
 
-    box.style.display = 'block';
+    // box.style.display = 'block';
 
     // clear existing timer for this seat
     if (timers[seatId]) {
@@ -73,9 +78,9 @@ function startCountdown(seconds, seatId, user) {
 
     timers[seatId] = setInterval(() => {
         if (timerEl) {
-            timerEl.innerHTML = `⏳ ${seconds}s`;
+            timerEl.innerHTML = ` ${seconds}s`;
         }
-        // box.innerHTML = `⏳ ${seatId.toUpperCase()} → Confirm in ${seconds}s 
+        // box.innerHTML = ` ${seatId.toUpperCase()} → Confirm in ${seconds}s 
         // <br><button onclick="confirmSeat('${seatId}','${user}')">Confirm</button>`;
 
         seconds--;
@@ -175,7 +180,8 @@ function generateSeats() {
                 <div class="seat-id">${r + c}</div>
                 <div class="seat-timer" id="timer-${seatId}"></div>
                 <button class="confirm-btn" id="btn-${seatId}" style="display:none" 
-                onclick="event.stopPropagation(); confirmSeat('${seatId}', document.getElementById('username').value)">
+                    onclick="event.stopPropagation(); confirmSeat('${seatId}', document.getElementById('username').value)"
+                >
                     Confirm
                 </button>
             `;
@@ -224,7 +230,7 @@ async function holdSeatFromUI(seatId, user) {
             btn.style.display = 'block';
             btn.onclick = () => confirmSeat(seatId, user);
         }
-        box.innerHTML = `🟡 Seat ${seatId.toUpperCase()} held for you`;
+        box.innerHTML = ` Seat ${seatId.toUpperCase()} held for you`;
         box.className = 'success';
 
         updateSeatUI(seatId, 'held');
@@ -239,7 +245,7 @@ async function holdSeatFromUI(seatId, user) {
         }
 
         if (data.ttl > 0) {
-            box.innerHTML = ` ${data.message} <br>⏳ Try again in ${data.ttl}s`;
+            box.innerHTML = ` ${data.message} <br> Try again in ${data.ttl}s`;
         } else {
             box.innerHTML = ` Seat Booked!`;
         }
@@ -273,7 +279,7 @@ async function refreshSeats() {
 
             updateSeatUI(id, status === 'confirmed' ? 'booked' : 'held');
         } else {
-            // 🔥 Seat no longer exists in Redis → make it available
+            //  Seat no longer exists in Redis → make it available
             updateSeatUI(id, 'available');
         }
     });
