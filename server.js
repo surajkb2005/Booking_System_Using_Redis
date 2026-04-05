@@ -81,36 +81,36 @@ app.delete('/api/flights/:id', async (req, res) => {
 // ==========================================
 // 🎫  API: BOOKING SYSTEM (RACE CONDITION)
 // ==========================================
-app.post('/api/book', async (req, res) => {
-    const { seatId, user } = req.body;
-    console.log(`⚡ Booking Attempt: [${user}] wants [${seatId}]...`);
+// app.post('/api/book', async (req, res) => {
+//     const { seatId, user } = req.body;
+//     console.log(`⚡ Booking Attempt: [${user}] wants [${seatId}]...`);
 
-    try {
-        // --- REAL REDIS ATOMIC LOCK ---
-        // SET key value NX (Not Exists) EX 20 (Expire in 20s)
-        const result = await client.set(seatId, user, {
-            NX: true,
-            EX: 20
-        });
+//     try {
+//         // --- REAL REDIS ATOMIC LOCK ---
+//         // SET key value NX (Not Exists) EX 20 (Expire in 20s)
+//         const result = await client.set(seatId, user, {
+//             NX: true,
+//             EX: 20
+//         });
 
-        if (result === 'OK') {
-            console.log(`   ✅ SUCCESS: Locked for ${user}`);
-            res.json({ success: true, message: "🎉 Booking Confirmed!" });
-        } else {
-            // Check who owns it
-            const owner = await client.get(seatId);
-            const ttl = await client.ttl(seatId);
-            console.log(`   ❌ FAILED: Blocked by lock owned by ${owner}`);
-            res.json({
-                success: false,
-                message: `❌ Failed! Seat held by ${owner}`,
-                ttl: ttl
-            });
-        }
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
+//         if (result === 'OK') {
+//             console.log(`   ✅ SUCCESS: Locked for ${user}`);
+//             res.json({ success: true, message: "🎉 Booking Confirmed!" });
+//         } else {
+//             // Check who owns it
+//             const owner = await client.get(seatId);
+//             const ttl = await client.ttl(seatId);
+//             console.log(`   ❌ FAILED: Blocked by lock owned by ${owner}`);
+//             res.json({
+//                 success: false,
+//                 message: `❌ Failed! Seat held by ${owner}`,
+//                 ttl: ttl
+//             });
+//         }
+//     } catch (e) {
+//         res.status(500).json({ error: e.message });
+//     }
+// });
 
 app.post('/api/hold', async (req, res) => {
     const { seatId, user } = req.body;
@@ -161,6 +161,20 @@ app.post('/api/confirm', async (req, res) => {
     }));
 
     res.json({ success: true, message: "✅ Seat Confirmed!" });
+});
+
+app.get('/api/seats', async (req, res) => {
+    const keys = await client.keys('[abc][1-4]');
+    const result = {};
+
+    for (const key of keys) {
+        const data = await client.get(key);
+        if (data) {
+            result[key] = JSON.parse(data);
+        }
+    }
+
+    res.json(result);
 });
 
 // Start Server
