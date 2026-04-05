@@ -47,7 +47,7 @@ async function holdSeat() {
     const seatId = document.getElementById('seatId').value.toLowerCase();
     const box = document.getElementById('status-box');
 
-    const res = await fetch(`${API}/hold`, {
+    const res = await fetch(`${API}/bookings/hold`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ seatId, user })
@@ -105,7 +105,7 @@ async function confirmSeat(seatId, user) {
     const timerEl = document.getElementById(`timer-${seatId}`);
     if (timerEl) timerEl.innerHTML = '';
 
-    const res = await fetch(`${API}/confirm`, {
+    const res = await fetch(`${API}/bookings/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ seatId, user })
@@ -215,7 +215,7 @@ async function holdSeatFromUI(seatId, user) {
     const box = document.getElementById('status-box');
     const btn = document.getElementById(`btn-${seatId}`);
 
-    const res = await fetch(`${API}/hold`, {
+    const res = await fetch(`${API}/bookings/hold`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ seatId, user })
@@ -266,7 +266,7 @@ function updateSeatUI(seatId, status) {
 }
 
 async function refreshSeats() {
-    const keys = await fetch(`${API}/seats`).then(r => r.json());
+    const keys = await fetch(`${API}/bookings/seats`).then(r => r.json());
 
     document.querySelectorAll('.seat').forEach(seat => {
         const id = seat.querySelector('.seat-id').innerText.toLowerCase();
