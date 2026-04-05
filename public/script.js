@@ -36,9 +36,71 @@ async function deleteFlight(id) {
     loadFlights();
 }
 
+let timer;
+
+async function holdSeat() {
+    const user = document.getElementById('username').value;
+    const seatId = document.getElementById('seatId').value.toLowerCase();
+    const box = document.getElementById('status-box');
+
+    const res = await fetch(`${API}/hold`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seatId, user })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+        box.style.display = 'block';   // 🔥 IMPORTANT
+        box.innerHTML = "✅ Seat held!";
+        startCountdown(20, seatId, user);
+    } else {
+        box.style.display = 'block';   // also here
+        box.innerHTML = `❌ ${data.message} (${data.ttl}s left)`;
+    }
+}
+
+function startCountdown(seconds, seatId, user) {
+    const box = document.getElementById('status-box');
+
+    clearInterval(timer);
+
+    timer = setInterval(() => {
+        box.innerHTML = `⏳ Confirm in ${seconds}s 
+        <br><button onclick="confirmSeat('${seatId}','${user}')">Confirm</button>`;
+
+        seconds--;
+
+        if (seconds < 0) {
+            clearInterval(timer);
+            box.innerHTML = "❌ Time expired!";
+        }
+    }, 1000);
+}
+
+async function confirmSeat(seatId, user) {
+    const res = await fetch(`${API}/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seatId, user })
+    });
+
+    const data = await res.json();
+
+    const box = document.getElementById('status-box');
+
+    if (data.success) {
+        clearInterval(timer);
+        box.innerHTML = "🎉 Seat booked successfully!";
+    } else {
+        box.innerHTML = `❌ ${data.message}`;
+    }
+}
+
 async function bookTicket() {
     const user = document.getElementById('username').value;
-    const seatId = document.getElementById('seatId').value;
+    const seatId = document.getElementById('seatId').value.toLowerCase();
     const box = document.getElementById('status-box');
 
     if (!user || !seatId) return alert("Enter details");

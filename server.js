@@ -2,6 +2,9 @@ const express = require('express');
 const redis = require('redis');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 // --- 1. SETUP EXPRESS SERVER ---
 const app = express();
@@ -109,7 +112,58 @@ app.post('/api/book', async (req, res) => {
     }
 });
 
+app.post('/api/hold', async (req, res) => {
+    const { seatId, user } = req.body;
+
+    const value = JSON.stringify({
+        user,
+        status: "hold"
+    });
+
+    const result = await client.set(seatId, value, {
+        NX: true,
+        EX: 20
+    });
+
+    if (result === 'OK') {
+        res.json({ success: true, message: "Seat held for 20s" });
+    } else {
+        const data = JSON.parse(await client.get(seatId));
+        const ttl = await client.ttl(seatId);
+
+        res.json({
+            success: false,
+            message: `Held by ${data.user}`,
+            ttl
+        });
+    }
+});
+
+app.post('/api/confirm', async (req, res) => {
+    const { seatId, user } = req.body;
+
+    const data = await client.get(seatId);
+
+    if (!data) {
+        return res.json({ success: false, message: "Seat expired!" });
+    }
+
+    const parsed = JSON.parse(data);
+
+    if (parsed.user !== user) {
+        return res.json({ success: false, message: "Not your seat!" });
+    }
+
+    // Remove TTL → permanent booking
+    await client.set(seatId, JSON.stringify({
+        user,
+        status: "confirmed"
+    }));
+
+    res.json({ success: true, message: "✅ Seat Confirmed!" });
+});
+
 // Start Server
-app.listen(3000, () => {
-    console.log("🚀 Server running at http://localhost:3000");
+app.listen(process.env.PORT || 3000, () => {
+    console.log(`🚀 Server running at ${process.env.PORT || 3000}`);
 });
