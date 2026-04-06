@@ -4,20 +4,20 @@ const client = require('../config/redisClient');
 exports.holdSeat = async (req, res) => {
     const { seatId, user } = req.body;
 
-    const value = JSON.stringify({
+    const value = {
         user,
         status: "hold"
-    });
+    };
 
     const result = await client.set(seatId, value, {
-        NX: true,
-        EX: 20
+        nx: true,
+        ex: 20
     });
 
     if (result === 'OK') {
         res.json({ success: true, message: "Seat held for 20s" });
     } else {
-        const data = JSON.parse(await client.get(seatId));
+        const data = await client.get(seatId);
         const ttl = await client.ttl(seatId);
 
         res.json({
@@ -37,17 +37,17 @@ exports.confirmSeat = async (req, res) => {
         return res.json({ success: false, message: "Seat expired!" });
     }
 
-    const parsed = JSON.parse(data);
+    const parsed = data;
 
     if (parsed.user !== user) {
         return res.json({ success: false, message: "Not your seat!" });
     }
 
     // Remove TTL -> permanent booking
-    await client.set(seatId, JSON.stringify({
+    await client.set(seatId, {
         user,
         status: "confirmed"
-    }));
+    });
 
     res.json({ success: true, message: "✅ Seat Confirmed!" });
 };
@@ -59,7 +59,7 @@ exports.getSeats = async (req, res) => {
     for (const key of keys) {
         const data = await client.get(key);
         if (data) {
-            result[key] = JSON.parse(data);
+            result[key] = data;
         }
     }
 
