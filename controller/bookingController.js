@@ -53,15 +53,21 @@ exports.confirmSeat = async (req, res) => {
 };
 
 exports.getSeats = async (req, res) => {
-    const keys = await client.keys('[abc][1-4]');
+    const seats = [
+        'a1', 'a2', 'a3', 'a4',
+        'b1', 'b2', 'b3', 'b4',
+        'c1', 'c2', 'c3', 'c4'
+    ];
+
+    const values = await client.mget(...seats); // 🔥 ONE call
+
     const result = {};
 
-    for (const key of keys) {
-        const data = await client.get(key);
-        if (data) {
-            result[key] = data;
+    seats.forEach((seat, i) => {
+        if (values[i]) {
+            result[seat] = values[i];
         }
-    }
+    });
 
     res.json(result);
 };

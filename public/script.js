@@ -1,4 +1,6 @@
+// public/script.js
 const API = 'https://booking-system-using-redis.onrender.com/api';
+
 let timers = {};
 
 async function loadFlights() {
@@ -127,6 +129,8 @@ async function confirmSeat(seatId, user) {
         const btn = document.getElementById(`btn-${seatId}`);
         if (btn) btn.remove();
 
+        await refreshSeats();
+
         box.innerHTML = `🎉 Seat ${seatId.toUpperCase()} booked successfully!`;
         box.className = 'success';
     } else {
@@ -236,6 +240,7 @@ async function holdSeatFromUI(seatId, user) {
         updateSeatUI(seatId, 'held');
         startCountdown(20, seatId, user);
 
+        await refreshSeats();
     } else {
         if (data.message.includes(user)) {
             // already held by same user -> keep button
@@ -284,8 +289,6 @@ async function refreshSeats() {
         }
     });
 }
-
-setInterval(refreshSeats, 2000);
 
 // Initial Load
 loadFlights();
