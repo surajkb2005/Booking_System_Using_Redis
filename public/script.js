@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000/api';
+const API = 'https://booking-system-using-redis.onrender.com/api';
 let timers = {};
 
 async function loadFlights() {
