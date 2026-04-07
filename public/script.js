@@ -1,5 +1,48 @@
 // public/script.js
-const API = 'https://booking-system-using-redis.onrender.com/api';
+const API = 'http://localhost:3000/api';
+const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+const ws = new WebSocket(`${wsProtocol}://${window.location.host}`);
+
+ws.onmessage = (event) => {
+    console.log("WS MESSAGE:", event.data);
+
+    const data = JSON.parse(event.data);
+
+    if (data.type === "seat_update") {
+
+        const currentUser = document.getElementById('username').value;
+
+        const seatDiv = document.querySelector(`#timer-${data.seatId}`)?.closest('.seat');
+
+        // Don't override booked seats
+        if (seatDiv?.classList.contains('booked')) return;
+
+        if (data.status === "confirmed") {
+            updateSeatUI(data.seatId, 'booked');
+
+            const btn = document.getElementById(`btn-${data.seatId}`);
+            if (btn) btn.style.display = 'none';
+
+        } else if (data.status === "held") {
+
+            updateSeatUI(data.seatId, 'held');
+
+            const btn = document.getElementById(`btn-${data.seatId}`);
+
+            if (data.user === currentUser) {
+                // My seat
+                if (btn) btn.style.display = 'block';
+
+                // start timer for me
+                startCountdown(20, data.seatId, data.user);
+
+            } else {
+                // Someone else
+                if (btn) btn.style.display = 'none';
+            }
+        }
+    }
+};
 
 let timers = {};
 
@@ -42,6 +85,15 @@ async function deleteFlight(id) {
     });
 
     loadFlights();
+}
+
+async function initialLoadSeats() {
+    const keys = await fetch(`${API}/bookings/seats`).then(r => r.json());
+
+    Object.keys(keys).forEach(id => {
+        const status = keys[id].status;
+        updateSeatUI(id, status === 'confirmed' ? 'booked' : 'held');
+    });
 }
 
 async function holdSeat() {
@@ -128,8 +180,6 @@ async function confirmSeat(seatId, user) {
 
         const btn = document.getElementById(`btn-${seatId}`);
         if (btn) btn.remove();
-
-        await refreshSeats();
 
         box.innerHTML = `🎉 Seat ${seatId.toUpperCase()} booked successfully!`;
         box.className = 'success';
@@ -240,7 +290,6 @@ async function holdSeatFromUI(seatId, user) {
         updateSeatUI(seatId, 'held');
         startCountdown(20, seatId, user);
 
-        await refreshSeats();
     } else {
         if (data.message.includes(user)) {
             // already held by same user -> keep button
@@ -270,27 +319,27 @@ function updateSeatUI(seatId, status) {
     });
 }
 
-async function refreshSeats() {
-    const keys = await fetch(`${API}/bookings/seats`).then(r => r.json());
+// async function refreshSeats() {
+//     const keys = await fetch(`${API}/bookings/seats`).then(r => r.json());
 
-    document.querySelectorAll('.seat').forEach(seat => {
-        const id = seat.querySelector('.seat-id').innerText.toLowerCase();
+//     document.querySelectorAll('.seat').forEach(seat => {
+//         const id = seat.querySelector('.seat-id').innerText.toLowerCase();
 
-        if (keys[id]) {
-            const status = keys[id].status;
-            const currentSeat = document.querySelector(`#timer-${id}`)?.closest('.seat');
+//         if (keys[id]) {
+//             const status = keys[id].status;
+//             const currentSeat = document.querySelector(`#timer-${id}`)?.closest('.seat');
 
-            if (currentSeat?.classList.contains('booked')) return;
+//             if (currentSeat?.classList.contains('booked')) return;
 
-            updateSeatUI(id, status === 'confirmed' ? 'booked' : 'held');
-        } else {
-            //  Seat no longer exists in Redis → make it available
-            updateSeatUI(id, 'available');
-        }
-    });
-}
+//             updateSeatUI(id, status === 'confirmed' ? 'booked' : 'held');
+//         } else {
+//             //  Seat no longer exists in Redis → make it available
+//             updateSeatUI(id, 'available');
+//         }
+//     });
+// }
 
 // Initial Load
 loadFlights();
 generateSeats();
-refreshSeats();
+initialLoadSeats();

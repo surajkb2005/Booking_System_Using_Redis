@@ -6,9 +6,36 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 
+const http = require('http');
+const WebSocket = require('ws');
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public')); // Serves the HTML file
+app.use(express.static('public'));
+
+// Store clients
+let clients = [];
+
+wss.on('connection', (ws) => {
+    console.log(" WebSocket Connected");
+    clients.push(ws);
+
+    ws.on('close', () => {
+        clients = clients.filter(c => c !== ws);
+    });
+});
+
+// Broadcast function
+global.broadcast = (data) => {
+    clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(data));
+        }
+    });
+};
+
 
 // Import Routes
 const flightRoute = require('./routes/flightRoute');
@@ -24,7 +51,7 @@ app.use('/api/bookings', bookingRoute);
 //   API: CLEAN REDIS CACHE
 app.use('/api/clean', cleanRedisCache);
 
-// Start Server
-app.listen(process.env.PORT || 3000, () => {
-    console.log(`🚀 Server running at ${process.env.PORT || 3000}`);
+// Start server
+server.listen(process.env.PORT || 3000, () => {
+    console.log(`🚀 Server running`);
 });

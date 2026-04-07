@@ -24,13 +24,22 @@ exports.createFlight = async (req, res) => {
 exports.getFlights = async (req, res) => {
     try {
         // SCAN for all keys starting with 'flight:'
-        const keys = await client.keys('flight:*');
+        let cursor = 0;
+        let keys = [];
+
+        do {
+            const res = await client.scan(cursor, { match: 'flight:*', count: 10 });
+            cursor = res[0];
+            keys.push(...res[1]);
+        } while (cursor !== 0);
+
         const flights = [];
 
         for (const key of keys) {
             const data = await client.hgetall(key);
             flights.push({ id: key.replace('flight:', ''), ...data });
         }
+
         res.json(flights);
     } catch (e) {
         res.status(500).json({ error: e.message });

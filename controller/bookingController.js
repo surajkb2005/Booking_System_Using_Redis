@@ -15,7 +15,14 @@ exports.holdSeat = async (req, res) => {
     });
 
     if (result === 'OK') {
-        res.json({ success: true, message: "Seat held for 20s" });
+        global.broadcast({
+            type: "seat_update",
+            seatId,
+            status: "held",
+            user
+        });
+
+        return res.json({ success: true, message: "Seat held for 20s" });
     } else {
         const data = await client.get(seatId);
         const ttl = await client.ttl(seatId);
@@ -47,6 +54,13 @@ exports.confirmSeat = async (req, res) => {
     await client.set(seatId, {
         user,
         status: "confirmed"
+    });
+
+    global.broadcast({
+        type: "seat_update",
+        seatId,
+        status: "confirmed",
+        user
     });
 
     res.json({ success: true, message: "✅ Seat Confirmed!" });
