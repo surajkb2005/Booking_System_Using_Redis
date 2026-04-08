@@ -40,6 +40,14 @@ ws.onmessage = (event) => {
                 // Someone else
                 if (btn) btn.style.display = 'none';
             }
+        } else if (data.status === "available") {
+            updateSeatUI(data.seatId, 'available');
+
+            const btn = document.getElementById(`btn-${data.seatId}`);
+            if (btn) btn.style.display = 'none';
+
+            const timerEl = document.getElementById(`timer-${data.seatId}`);
+            if (timerEl) timerEl.innerHTML = '';
         }
     }
 };

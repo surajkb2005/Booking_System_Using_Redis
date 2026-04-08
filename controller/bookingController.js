@@ -1,4 +1,5 @@
 const client = require('../config/redisClient');
+const expiryMap = new Map(); 
 
 
 exports.holdSeat = async (req, res) => {
@@ -15,6 +16,26 @@ exports.holdSeat = async (req, res) => {
     });
 
     if (result === 'OK') {
+
+        // 🔥 Clear existing timer (if any)
+        if (expiryMap.has(seatId)) {
+            clearTimeout(expiryMap.get(seatId));
+        }
+
+        const timeoutId = setTimeout(() => {
+
+            expiryMap.delete(seatId);
+
+            global.broadcast({
+                type: "seat_update",
+                seatId,
+                status: "available"
+            });
+
+        }, 20000);
+
+        expiryMap.set(seatId, timeoutId);
+
         global.broadcast({
             type: "seat_update",
             seatId,
@@ -22,7 +43,7 @@ exports.holdSeat = async (req, res) => {
             user
         });
 
-        return res.json({ success: true, message: "Seat held for 20s" });
+        return res.json({ success: true });
     } else {
         const data = await client.get(seatId);
         const ttl = await client.ttl(seatId);
@@ -55,6 +76,11 @@ exports.confirmSeat = async (req, res) => {
         user,
         status: "confirmed"
     });
+
+    if (expiryMap.has(seatId)) {
+        clearTimeout(expiryMap.get(seatId));
+        expiryMap.delete(seatId);
+    }
 
     global.broadcast({
         type: "seat_update",
