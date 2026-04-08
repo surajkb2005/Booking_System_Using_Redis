@@ -1,5 +1,5 @@
 const client = require('../config/redisClient');
-
+const expiryMap = new Map();
 
 exports.holdSeat = async (req, res) => {
     const { seatId, user } = req.body;
@@ -15,7 +15,34 @@ exports.holdSeat = async (req, res) => {
     });
 
     if (result === 'OK') {
-        res.json({ success: true, message: "Seat held for 20s" });
+
+        // Clear existing timer (if any)
+        if (expiryMap.has(seatId)) {
+            clearTimeout(expiryMap.get(seatId));
+        }
+
+        const timeoutId = setTimeout(() => {
+
+            expiryMap.delete(seatId);
+
+            global.broadcast({
+                type: "seat_update",
+                seatId,
+                status: "available"
+            });
+
+        }, 20000);
+
+        expiryMap.set(seatId, timeoutId);
+
+        global.broadcast({
+            type: "seat_update",
+            seatId,
+            status: "held",
+            user
+        });
+
+        return res.json({ success: true });
     } else {
         const data = await client.get(seatId);
         const ttl = await client.ttl(seatId);
@@ -49,7 +76,19 @@ exports.confirmSeat = async (req, res) => {
         status: "confirmed"
     });
 
-    res.json({ success: true, message: "✅ Seat Confirmed!" });
+    if (expiryMap.has(seatId)) {
+        clearTimeout(expiryMap.get(seatId));
+        expiryMap.delete(seatId);
+    }
+
+    global.broadcast({
+        type: "seat_update",
+        seatId,
+        status: "confirmed",
+        user
+    });
+
+    res.json({ success: true, message: " Seat Confirmed!" });
 };
 
 exports.getSeats = async (req, res) => {
@@ -59,7 +98,7 @@ exports.getSeats = async (req, res) => {
         'c1', 'c2', 'c3', 'c4'
     ];
 
-    const values = await client.mget(...seats); // 🔥 ONE call
+    const values = await client.mget(...seats); // ONE call
 
     const result = {};
 

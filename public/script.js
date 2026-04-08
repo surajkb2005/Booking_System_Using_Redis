@@ -1,5 +1,56 @@
 // public/script.js
-const API = 'https://booking-system-using-redis.onrender.com/api';
+const API = `${window.location.origin}/api`;
+const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+const ws = new WebSocket(`${wsProtocol}://${window.location.host}`);
+
+ws.onmessage = (event) => {
+    console.log("WS MESSAGE:", event.data);
+
+    const data = JSON.parse(event.data);
+
+    if (data.type === "seat_update") {
+
+        const currentUser = document.getElementById('username').value;
+
+        const seatDiv = document.querySelector(`#timer-${data.seatId}`)?.closest('.seat');
+
+        // Don't override booked seats
+        if (seatDiv?.classList.contains('booked')) return;
+
+        if (data.status === "confirmed") {
+            updateSeatUI(data.seatId, 'booked');
+
+            const btn = document.getElementById(`btn-${data.seatId}`);
+            if (btn) btn.style.display = 'none';
+
+        } else if (data.status === "held") {
+
+            updateSeatUI(data.seatId, 'held');
+
+            const btn = document.getElementById(`btn-${data.seatId}`);
+
+            if (data.user === currentUser) {
+                // My seat
+                if (btn) btn.style.display = 'block';
+
+                // start timer for me
+                startCountdown(20, data.seatId, data.user);
+
+            } else {
+                // Someone else
+                if (btn) btn.style.display = 'none';
+            }
+        } else if (data.status === "available") {
+            updateSeatUI(data.seatId, 'available');
+
+            const btn = document.getElementById(`btn-${data.seatId}`);
+            if (btn) btn.style.display = 'none';
+
+            const timerEl = document.getElementById(`timer-${data.seatId}`);
+            if (timerEl) timerEl.innerHTML = '';
+        }
+    }
+};
 
 let timers = {};
 
@@ -42,6 +93,15 @@ async function deleteFlight(id) {
     });
 
     loadFlights();
+}
+
+async function initialLoadSeats() {
+    const keys = await fetch(`${API}/bookings/seats`).then(r => r.json());
+
+    Object.keys(keys).forEach(id => {
+        const status = keys[id].status;
+        updateSeatUI(id, status === 'confirmed' ? 'booked' : 'held');
+    });
 }
 
 async function holdSeat() {
@@ -129,8 +189,6 @@ async function confirmSeat(seatId, user) {
         const btn = document.getElementById(`btn-${seatId}`);
         if (btn) btn.remove();
 
-        await refreshSeats();
-
         box.innerHTML = `🎉 Seat ${seatId.toUpperCase()} booked successfully!`;
         box.className = 'success';
     } else {
@@ -138,34 +196,6 @@ async function confirmSeat(seatId, user) {
         box.className = 'error';
     }
 }
-
-// async function bookTicket() {
-//     const user = document.getElementById('username').value;
-//     const seatId = document.getElementById('seatId').value.toLowerCase();
-//     const box = document.getElementById('status-box');
-
-//     if (!user || !seatId) return alert("Enter details");
-
-//     box.style.display = 'block';
-//     box.innerHTML = ' Processing...';
-//     box.className = '';
-
-//     const res = await fetch(`${API}/book`, {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ seatId, user })
-//     });
-//     const data = await res.json();
-
-//     if (data.success) {
-//         box.innerHTML = ` ${data.message}`;
-//         box.className = 'success';
-//     } else {
-//         // data.ttl is used here just like in your friend's original code
-//         box.innerHTML = ` ${data.message} (Try in ${data.ttl}s)`;
-//         box.className = 'error';
-//     }
-// }
 
 function generateSeats() {
     const map = document.getElementById('seat-map');
@@ -240,7 +270,6 @@ async function holdSeatFromUI(seatId, user) {
         updateSeatUI(seatId, 'held');
         startCountdown(20, seatId, user);
 
-        await refreshSeats();
     } else {
         if (data.message.includes(user)) {
             // already held by same user -> keep button
@@ -270,27 +299,27 @@ function updateSeatUI(seatId, status) {
     });
 }
 
-async function refreshSeats() {
-    const keys = await fetch(`${API}/bookings/seats`).then(r => r.json());
+// async function refreshSeats() {
+//     const keys = await fetch(`${API}/bookings/seats`).then(r => r.json());
 
-    document.querySelectorAll('.seat').forEach(seat => {
-        const id = seat.querySelector('.seat-id').innerText.toLowerCase();
+//     document.querySelectorAll('.seat').forEach(seat => {
+//         const id = seat.querySelector('.seat-id').innerText.toLowerCase();
 
-        if (keys[id]) {
-            const status = keys[id].status;
-            const currentSeat = document.querySelector(`#timer-${id}`)?.closest('.seat');
+//         if (keys[id]) {
+//             const status = keys[id].status;
+//             const currentSeat = document.querySelector(`#timer-${id}`)?.closest('.seat');
 
-            if (currentSeat?.classList.contains('booked')) return;
+//             if (currentSeat?.classList.contains('booked')) return;
 
-            updateSeatUI(id, status === 'confirmed' ? 'booked' : 'held');
-        } else {
-            //  Seat no longer exists in Redis → make it available
-            updateSeatUI(id, 'available');
-        }
-    });
-}
+//             updateSeatUI(id, status === 'confirmed' ? 'booked' : 'held');
+//         } else {
+//             //  Seat no longer exists in Redis → make it available
+//             updateSeatUI(id, 'available');
+//         }
+//     });
+// }
 
 // Initial Load
 loadFlights();
 generateSeats();
-refreshSeats();
+initialLoadSeats();
