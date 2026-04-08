@@ -1,5 +1,5 @@
 // public/script.js
-const API = 'http://localhost:3000/api';
+const API = `${window.location.origin}/api`;
 const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
 const ws = new WebSocket(`${wsProtocol}://${window.location.host}`);
 
@@ -196,34 +196,6 @@ async function confirmSeat(seatId, user) {
         box.className = 'error';
     }
 }
-
-// async function bookTicket() {
-//     const user = document.getElementById('username').value;
-//     const seatId = document.getElementById('seatId').value.toLowerCase();
-//     const box = document.getElementById('status-box');
-
-//     if (!user || !seatId) return alert("Enter details");
-
-//     box.style.display = 'block';
-//     box.innerHTML = ' Processing...';
-//     box.className = '';
-
-//     const res = await fetch(`${API}/book`, {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ seatId, user })
-//     });
-//     const data = await res.json();
-
-//     if (data.success) {
-//         box.innerHTML = ` ${data.message}`;
-//         box.className = 'success';
-//     } else {
-//         // data.ttl is used here just like in your friend's original code
-//         box.innerHTML = ` ${data.message} (Try in ${data.ttl}s)`;
-//         box.className = 'error';
-//     }
-// }
 
 function generateSeats() {
     const map = document.getElementById('seat-map');

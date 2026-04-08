@@ -28,9 +28,9 @@ exports.getFlights = async (req, res) => {
         let keys = [];
 
         do {
-            const res = await client.scan(cursor, { match: 'flight:*', count: 10 });
-            cursor = res[0];
-            keys.push(...res[1]);
+            const result = await client.scan(cursor, { match: 'flight:*', count: 10 });
+            cursor = result[0];
+            keys.push(...result[1]);
         } while (cursor !== 0);
 
         const flights = [];

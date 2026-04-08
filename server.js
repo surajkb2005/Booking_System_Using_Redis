@@ -20,7 +20,26 @@ let clients = [];
 
 wss.on('connection', (ws) => {
     console.log(" WebSocket Connected");
+
+    ws.isAlive = true; // Initialize to true
+    ws.on('pong', () => {
+        ws.isAlive = true; // Listen for the pong to keep it alive
+    });
+
     clients.push(ws);
+
+
+    setInterval(() => {
+        clients.forEach((ws) => {
+            if (!ws.isAlive) {
+                ws.terminate(); // force close
+                clients = clients.filter(c => c !== ws);
+            } else {
+                ws.isAlive = false;
+                ws.ping();
+            }
+        });
+    }, 30000);
 
     ws.on('close', () => {
         clients = clients.filter(c => c !== ws);
