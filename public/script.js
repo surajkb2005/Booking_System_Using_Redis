@@ -75,21 +75,6 @@ ws.onmessage = (event) => {
 
 let timers = {};
 
-// async function loadFlights() {
-//     const res = await fetch(`${API}/flights`);
-//     const flights = await res.json();
-//     const tbody = document.getElementById('flight-table');
-
-//     tbody.innerHTML = '';
-//     flights.forEach(f => {
-//         tbody.innerHTML += `<tr>
-//             <td><strong>${f.id}</strong><br><small>${f.airline}</small></td>
-//             <td>$${f.price}</td>
-//             <td><button onclick="deleteFlight('${f.id}')" style="background:none; border:none; cursor:pointer;">❌</button></td>
-//         </tr>`;
-//     });
-// }
-
 function addFlight() {
     const origin = document.getElementById('forig').value;
     const dest = document.getElementById('fdest').value;
@@ -131,14 +116,6 @@ function selectFlight(flightId, origin, dest) {
     initialLoadSeats();
 }
 
-// async function deleteFlight(id) {
-//     await fetch(`${API}/flights/${id}`, {
-//         method: 'DELETE'
-//     });
-
-//     loadFlights();
-// }
-
 async function initialLoadSeats() {
     const keys = await fetch(`${API}/bookings/seats?flightKey=${CURRENT_FLIGHT_KEY}`).then(r => r.json());
 
@@ -172,10 +149,7 @@ async function holdSeat() {
 }
 
 function startCountdown(seconds, seatId, user) {
-    // const box = document.getElementById('status-box');
     const timerEl = document.getElementById(`timer-${seatId}`);
-
-    // box.style.display = 'block';
 
     // clear existing timer for this seat
     if (timers[seatId]) {
@@ -186,8 +160,6 @@ function startCountdown(seconds, seatId, user) {
         if (timerEl) {
             timerEl.innerHTML = ` ${seconds}s`;
         }
-        // box.innerHTML = ` ${seatId.toUpperCase()} → Confirm in ${seconds}s 
-        // <br><button onclick="confirmSeat('${seatId}','${user}')">Confirm</button>`;
 
         seconds--;
 
@@ -346,6 +318,5 @@ function updateSeatUI(seatId, status) {
 }
 
 // Initial Load
-// loadFlights();
 // generateSeats();
 initialLoadSeats();
