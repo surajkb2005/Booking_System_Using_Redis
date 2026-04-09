@@ -64,7 +64,7 @@ body {
     padding: 25px;
 }
 
-input {
+input, select {
     padding: 12px;
     border-radius: 10px;
     border: 1px solid #ddd;

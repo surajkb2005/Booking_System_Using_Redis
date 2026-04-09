@@ -3,6 +3,19 @@ const API = `${window.location.origin}/api`;
 const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
 const ws = new WebSocket(`${wsProtocol}://${window.location.host}`);
 
+const ROUTE_PRICES = {
+    "ND-GO": 4500,
+    "ND-BENG": 3500,
+    "MUMb-GO": 2000,
+    "MUMb-BENG": 3000
+};
+const CITY_NAMES = {
+    ND: "New Delhi",
+    MUMb: "Mumbai",
+    GO: "Goa",
+    BENG: "Bengaluru"
+};
+
 ws.onmessage = (event) => {
     console.log("WS MESSAGE:", event.data);
 
@@ -69,22 +82,32 @@ async function loadFlights() {
     });
 }
 
-async function addFlight() {
-    const id = document.getElementById('fid').value;
-    const airline = document.getElementById('fairline').value;
-    const destination = document.getElementById('fdest').value;
-    const price = document.getElementById('fprice').value;
+function addFlight() {
+    const origin = document.getElementById('forig').value;
+    const dest = document.getElementById('fdest').value;
+    const flightId = document.getElementById('fid').value;
 
-    if (!id) return alert("Enter Flight ID");
+    const routeKey = `${dest}-${origin}`;
 
-    // Matches your server.js req.body exactly
-    await fetch(`${API}/flights`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, airline, destination, price })
-    });
+    const price = ROUTE_PRICES[routeKey];
 
-    loadFlights();
+    if (!price) {
+        alert("Route not available");
+        return;
+    }
+
+    const tbody = document.getElementById('flight-table');
+
+    tbody.innerHTML = `
+        <tr>
+            <td><strong>${flightId}</strong><br><small>${origin} → ${dest}</small></td>
+            <td>₹${price}</td>
+            <td><button onclick="selectFlight()">Select</button></td>
+        </tr>
+    `;
+
+    // load seat map AFTER selecting route
+    generateSeats();
 }
 
 async function deleteFlight(id) {
@@ -320,6 +343,6 @@ function updateSeatUI(seatId, status) {
 // }
 
 // Initial Load
-loadFlights();
+// loadFlights();
 generateSeats();
 initialLoadSeats();

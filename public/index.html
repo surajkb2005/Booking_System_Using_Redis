@@ -23,19 +23,32 @@
         <main class="dashboard-grid">
             <section class="card">
                 <div class="card-header">
-                    <h2>⚙️ Fleet Manager</h2>
+                    <h2>Fleet Manager</h2>
                 </div>
                 <div class="input-stack">
                     <div class="row">
-                        <input id="fid" placeholder="Flight ID (e.g. 101)">
-                        <input id="fairline" placeholder="Airline">
+                        <!-- <input id="fid" placeholder="Flight ID (e.g. 101)"> -->
+                        <select id="fid">
+                            <option value="AIR1001">AIR1001</option>
+                            <option value="AIR201">AIR201</option>
+                        </select>
                     </div>
                     <div class="row">
-                        <input id="fdest" placeholder="Destination">
-                        <input id="fprice" type="number" placeholder="Price">
+                        <!-- <input id="forig" placeholder="Destination"> -->
+                        <select id="forig">
+                            <option value="" disabled selected>Select Origin</option>
+                            <option value="GO">Goa</option>
+                            <option value="BENG">Bengaluru</option>
+                        </select>
+                        <!-- <input id="fdest" placeholder="Origin"> -->
+                        <select id="fdest">
+                            <option value="" disabled selected>Select Destination</option>
+                            <option value="ND">New Delhi</option>
+                            <option value="MUMb">Mumbai</option>
+                        </select>
                     </div>
                 </div>
-                <button class="btn-primary" onclick="addFlight()">Save to Redis</button>
+                <button class="btn-primary" onclick="addFlight()">Search</button>
 
                 <div class="table-container">
                     <table>
@@ -63,13 +76,15 @@
                     <div id="status-box"></div>
                 </div>
             </section> -->
-            <div class="booking-form">
-                <input id="username" placeholder=" Your Name " class="full-width">
+            <section>
+                <div class="booking-form">
+                    <input id="username" placeholder=" Your Name " class="full-width">
 
-                <div id="seat-map" class="seat-map"></div>
+                    <div id="seat-map" class="seat-map"></div>
 
-                <div id="status-box"></div>
-            </div>
+                    <div id="status-box"></div>
+                </div>
+            </section>
         </main>
     </div>
 
