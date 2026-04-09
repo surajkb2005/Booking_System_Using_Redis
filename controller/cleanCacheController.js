@@ -1,12 +1,14 @@
+const client = require('../config/redisClient');
+
 exports.cleanRedisCache = async (req, res) => {
     try {
-        const keys = await redis.keys('*'); // get ALL keys
+        const keys = await client.keys('*'); // get ALL keys
 
         if (keys.length === 0) {
             return res.json({ success: true, deleted: 0 });
         }
 
-        await redis.del(...keys); // delete all in one call
+        await client.del(...keys); // delete all in one call
 
         res.json({
             success: true,
