@@ -28,6 +28,7 @@ exports.holdSeat = async (req, res) => {
             global.broadcast({
                 type: "seat_update",
                 seatId,
+                actualSeatId: seatId.split(':').pop(),
                 status: "available"
             });
 
@@ -38,6 +39,7 @@ exports.holdSeat = async (req, res) => {
         global.broadcast({
             type: "seat_update",
             seatId,
+            actualSeatId: seatId.split(':').pop(),
             status: "held",
             user
         });
@@ -84,6 +86,7 @@ exports.confirmSeat = async (req, res) => {
     global.broadcast({
         type: "seat_update",
         seatId,
+        actualSeatId: seatId.split(':').pop(),
         status: "confirmed",
         user
     });
@@ -92,13 +95,17 @@ exports.confirmSeat = async (req, res) => {
 };
 
 exports.getSeats = async (req, res) => {
+    const { flightKey } = req.query;
+
     const seats = [
         'a1', 'a2', 'a3', 'a4',
         'b1', 'b2', 'b3', 'b4',
         'c1', 'c2', 'c3', 'c4'
     ];
 
-    const values = await client.mget(...seats); // ONE call
+    const fullKeys = seats.map(seat => `${flightKey}:${seat}`);
+
+    const values = await client.mget(...fullKeys); // SINGLE CALL
 
     const result = {};
 
