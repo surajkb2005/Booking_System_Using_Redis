@@ -71,6 +71,7 @@ input, select {
     margin-bottom: 10px;
     width: 100%;
     font-size: 0.9rem;
+    box-sizing: border-box;
 }
 
 .row {
@@ -186,4 +187,66 @@ td {
     color: white;
     border: none;
     cursor: pointer;
+}
+
+
+/* RESPONSIVE DESIGN for mobile devices */
+@media (max-width: 768px) {
+    body {
+        padding: 45px;
+        align-items: flex-start;
+    }
+    .dashboard-grid {
+        grid-template-columns: 1fr; /* stack vertically */
+    }
+
+    .glass-wrapper {
+        padding: 15px;
+        border-radius: 16px;
+    }
+
+    .row {
+        grid-template-columns: 1fr; /* one below another */
+    }
+    
+    .seat-map {
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 8px;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .seat {
+        padding: 8px;
+        font-size: 0.8rem;
+    }
+
+    .seat-id {
+        font-size: 0.9rem;
+    }
+
+    .card {
+        margin-bottom: 15px;
+    }
+
+    h2 {
+        font-size: 1.2rem;
+    }
+
+    button {
+        font-size: 0.9rem;
+        padding: 10px;
+    }
+
+    input, select {
+        font-size: 0.85rem;
+        padding: 10px;
+    }
+
+    #username {
+        width: 100%;
+        max-width: 100%;
+    }
 }
