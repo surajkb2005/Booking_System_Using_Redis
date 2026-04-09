@@ -3,50 +3,71 @@ const API = `${window.location.origin}/api`;
 const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
 const ws = new WebSocket(`${wsProtocol}://${window.location.host}`);
 
+const ROUTE_PRICES = {
+    "GO-ND": 6000,
+    "BENG-ND": 8000,
+    "GO-MUMb": 2000,
+    "BENG-MUMb": 3000
+};
+const CITY_NAMES = {
+    ND: "New Delhi",
+    MUMb: "Mumbai",
+    GO: "Goa",
+    BENG: "Bengaluru"
+};
+let CURRENT_FLIGHT_KEY = "";
+
 ws.onmessage = (event) => {
     console.log("WS MESSAGE:", event.data);
 
     const data = JSON.parse(event.data);
 
     if (data.type === "seat_update") {
+        if (!data.seatId.startsWith(CURRENT_FLIGHT_KEY))
+            return; // ignore other flights
+    }
+
+    const actualSeatId = data.seatId.split(':').pop();
+
+    if (data.type === "seat_update") {
 
         const currentUser = document.getElementById('username').value;
 
-        const seatDiv = document.querySelector(`#timer-${data.seatId}`)?.closest('.seat');
+        const seatDiv = document.querySelector(`#timer-${actualSeatId}`)?.closest('.seat');
 
         // Don't override booked seats
         if (seatDiv?.classList.contains('booked')) return;
 
         if (data.status === "confirmed") {
-            updateSeatUI(data.seatId, 'booked');
+            updateSeatUI(actualSeatId, 'booked');
 
-            const btn = document.getElementById(`btn-${data.seatId}`);
+            const btn = document.getElementById(`btn-${actualSeatId}`);
             if (btn) btn.style.display = 'none';
 
         } else if (data.status === "held") {
 
-            updateSeatUI(data.seatId, 'held');
+            updateSeatUI(actualSeatId, 'held');
 
-            const btn = document.getElementById(`btn-${data.seatId}`);
+            const btn = document.getElementById(`btn-${actualSeatId}`);
 
             if (data.user === currentUser) {
                 // My seat
                 if (btn) btn.style.display = 'block';
 
                 // start timer for me
-                startCountdown(20, data.seatId, data.user);
+                startCountdown(20, actualSeatId, data.user);
 
             } else {
                 // Someone else
                 if (btn) btn.style.display = 'none';
             }
         } else if (data.status === "available") {
-            updateSeatUI(data.seatId, 'available');
+            updateSeatUI(actualSeatId, 'available');
 
-            const btn = document.getElementById(`btn-${data.seatId}`);
+            const btn = document.getElementById(`btn-${actualSeatId}`);
             if (btn) btn.style.display = 'none';
 
-            const timerEl = document.getElementById(`timer-${data.seatId}`);
+            const timerEl = document.getElementById(`timer-${actualSeatId}`);
             if (timerEl) timerEl.innerHTML = '';
         }
     }
@@ -54,49 +75,49 @@ ws.onmessage = (event) => {
 
 let timers = {};
 
-async function loadFlights() {
-    const res = await fetch(`${API}/flights`);
-    const flights = await res.json();
+function addFlight() {
+    const origin = document.getElementById('forig').value;
+    const dest = document.getElementById('fdest').value;
+    const flightId = document.getElementById('fid').value;
+
+    if (!origin || !dest) {
+        alert("Please select both origin and destination");
+        return;
+    }
+
+    const routeKey = `${origin}-${dest}`;
+
+    const price = ROUTE_PRICES[routeKey];
+
+    if (!price) {
+        alert("Route not available");
+        return;
+    }
+
     const tbody = document.getElementById('flight-table');
 
-    tbody.innerHTML = '';
-    flights.forEach(f => {
-        tbody.innerHTML += `<tr>
-            <td><strong>${f.id}</strong><br><small>${f.airline}</small></td>
-            <td>$${f.price}</td>
-            <td><button onclick="deleteFlight('${f.id}')" style="background:none; border:none; cursor:pointer;">❌</button></td>
-        </tr>`;
-    });
+    tbody.innerHTML = `
+        <tr>
+            <td><strong>${flightId}</strong><br><small>${origin} → ${dest}</small></td>
+            <td>₹${price}</td>
+            <td><button onclick="selectFlight('${flightId}','${origin}','${dest}')">Select</button></td>
+        </tr>
+    `;
 }
 
-async function addFlight() {
-    const id = document.getElementById('fid').value;
-    const airline = document.getElementById('fairline').value;
-    const destination = document.getElementById('fdest').value;
-    const price = document.getElementById('fprice').value;
+function selectFlight(flightId, origin, dest) {
+    CURRENT_FLIGHT_KEY = `${flightId}:${origin}-${dest}`;
 
-    if (!id) return alert("Enter Flight ID");
+    // clear old timers
+    Object.values(timers).forEach(clearInterval);
+    timers = {};
 
-    // Matches your server.js req.body exactly
-    await fetch(`${API}/flights`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, airline, destination, price })
-    });
-
-    loadFlights();
-}
-
-async function deleteFlight(id) {
-    await fetch(`${API}/flights/${id}`, {
-        method: 'DELETE'
-    });
-
-    loadFlights();
+    generateSeats();
+    initialLoadSeats();
 }
 
 async function initialLoadSeats() {
-    const keys = await fetch(`${API}/bookings/seats`).then(r => r.json());
+    const keys = await fetch(`${API}/bookings/seats?flightKey=${CURRENT_FLIGHT_KEY}`).then(r => r.json());
 
     Object.keys(keys).forEach(id => {
         const status = keys[id].status;
@@ -128,10 +149,7 @@ async function holdSeat() {
 }
 
 function startCountdown(seconds, seatId, user) {
-    // const box = document.getElementById('status-box');
     const timerEl = document.getElementById(`timer-${seatId}`);
-
-    // box.style.display = 'block';
 
     // clear existing timer for this seat
     if (timers[seatId]) {
@@ -142,8 +160,6 @@ function startCountdown(seconds, seatId, user) {
         if (timerEl) {
             timerEl.innerHTML = ` ${seconds}s`;
         }
-        // box.innerHTML = ` ${seatId.toUpperCase()} → Confirm in ${seconds}s 
-        // <br><button onclick="confirmSeat('${seatId}','${user}')">Confirm</button>`;
 
         seconds--;
 
@@ -166,11 +182,12 @@ async function confirmSeat(seatId, user) {
     const box = document.getElementById('status-box');
     const timerEl = document.getElementById(`timer-${seatId}`);
     if (timerEl) timerEl.innerHTML = '';
+    const fullSeatId = `${CURRENT_FLIGHT_KEY}:${seatId}`;
 
     const res = await fetch(`${API}/bookings/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seatId, user })
+        body: JSON.stringify({ seatId: fullSeatId, user })
     });
 
     const data = await res.json();
@@ -248,11 +265,12 @@ async function handleSeatClick(seatId) {
 async function holdSeatFromUI(seatId, user) {
     const box = document.getElementById('status-box');
     const btn = document.getElementById(`btn-${seatId}`);
+    const fullSeatId = `${CURRENT_FLIGHT_KEY}:${seatId}`;
 
     const res = await fetch(`${API}/bookings/hold`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seatId, user })
+        body: JSON.stringify({ seatId: fullSeatId, user })
     });
 
     const data = await res.json();
@@ -299,27 +317,6 @@ function updateSeatUI(seatId, status) {
     });
 }
 
-// async function refreshSeats() {
-//     const keys = await fetch(`${API}/bookings/seats`).then(r => r.json());
-
-//     document.querySelectorAll('.seat').forEach(seat => {
-//         const id = seat.querySelector('.seat-id').innerText.toLowerCase();
-
-//         if (keys[id]) {
-//             const status = keys[id].status;
-//             const currentSeat = document.querySelector(`#timer-${id}`)?.closest('.seat');
-
-//             if (currentSeat?.classList.contains('booked')) return;
-
-//             updateSeatUI(id, status === 'confirmed' ? 'booked' : 'held');
-//         } else {
-//             //  Seat no longer exists in Redis → make it available
-//             updateSeatUI(id, 'available');
-//         }
-//     });
-// }
-
 // Initial Load
-loadFlights();
-generateSeats();
+// generateSeats();
 initialLoadSeats();

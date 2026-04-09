@@ -57,12 +57,9 @@ global.broadcast = (data) => {
 
 
 // Import Routes
-const flightRoute = require('./routes/flightRoute');
+// const flightRoute = require('./routes/flightRoute');
 const bookingRoute = require('./routes/bookingRoute');
 const cleanRedisCache = require('./routes/cleanRedisCache.js');
-
-//   API: FLIGHT MANAGEMENT (CRUD)
-app.use('/api/flights', flightRoute);
 
 //   API: BOOKING SYSTEM (RACE CONDITION)
 app.use('/api/bookings', bookingRoute);
@@ -72,5 +69,5 @@ app.use('/api/clean', cleanRedisCache);
 
 // Start server
 server.listen(process.env.PORT || 3000, () => {
-    console.log(`🚀 Server running`);
+    console.log(`Server running`);
 });
